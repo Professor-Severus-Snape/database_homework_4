@@ -53,12 +53,13 @@ JOIN Tracks ON Albums.album_id = Tracks.album_id
 WHERE duration = (SELECT MIN(duration) FROM Tracks);
 
 --9. название альбомов, содержащих наименьшее количество треков.
--- 1) каскадно удаляем таблицу, если она уже существует (иначе - будет ошибка)
-DROP TABLE IF EXISTS Subtable CASCADE;
--- 2) создаем временную таблицу 'Subtable'
-SELECT album_name, COUNT(Albums.album_id) AS counter INTO Subtable FROM Albums
+SELECT album_name FROM Albums
 JOIN Tracks ON Albums.album_id = Tracks.album_id
-GROUP BY album_name;
--- 3) получаем данные из временной таблицы
-SELECT album_name FROM Subtable
-WHERE counter = (SELECT MIN(counter) FROM Subtable);
+GROUP BY album_name
+HAVING COUNT(track_id) = (
+	SELECT COUNT(track_id) FROM Tracks
+	JOIN Albums ON Tracks.album_id = Albums.album_id
+	GROUP BY album_name
+	ORDER BY COUNT(track_id)
+	LIMIT 1
+);
